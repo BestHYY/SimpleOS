@@ -5,9 +5,14 @@
 extern "C" {
 #endif
     
+
 #include "simple_cfg.h"
-#include "simple_cdef.h"
-#include "stdint.h"
+#include "simple_def.h"
+#include "simple_kernel.h"
+#include "simple_scheduler.h"
+#include "simple_thread.h"
+#include "simple_ipc.h"
+
 void SimpleOS_disableInterrupt(void);
 void SimpleOS_enableInterrupt(void);
 void SimpleOS_enterCritical(void);

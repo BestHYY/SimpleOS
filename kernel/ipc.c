@@ -1,6 +1,5 @@
 #include "simpleos.h"
 
-ParameterPipe_t Pipe;
 
 uint32_t SimpleOS_IPC_initIPC(IPC_t *IPC, const char *Name)
 {
@@ -93,7 +92,6 @@ uint32_t SimpleOS_IPC_initIPCList(IPC_List_t *IPCList)
 
     IPCList->Queue.Head = SIMPLE_NULL;
     IPCList->Queue.Tail = SIMPLE_NULL;
-    IPCList->Pipe = &Pipe;
     return SIMPLE_ERR_OK;
 }
 
@@ -166,21 +164,6 @@ SIMPLE_INLINE uint32_t SimpleOS_IPC_checkChain(IPC_Chain_t *Chain)
     return SIMPLE_ERR_OK;
 }
 
-SIMPLE_INLINE uint32_t SimpleOS_IPC_checkParameterPipe(ParameterPipe_t *Pipe)
-{
-    Thread_t *Thread;
-    Thread = Pipe->Head;
-    while(Thread != SIMPLE_NULL)
-    {
-        Thread->SleepTime -= 1;
-        if(Thread->SleepTime == 0)
-        {
-            SimpleOS_IPC_resumeThread(Pipe,Thread,SIMPLE_ERR_TIMEOUT);
-        }
-        Thread = Thread->Next;
-    }
-    return SIMPLE_ERR_OK;
-}
 
 uint32_t SimpleOS_checkIPCList(IPC_List_t *IPC_List)
 {
@@ -189,7 +172,6 @@ uint32_t SimpleOS_checkIPCList(IPC_List_t *IPC_List)
     SimpleOS_IPC_checkChain(&IPC_List->Mutex);
     SimpleOS_IPC_checkChain(&IPC_List->Eventgroup);
     SimpleOS_IPC_checkChain(&IPC_List->Queue);
-    SimpleOS_IPC_checkParameterPipe(IPC_List->Pipe);
     return SIMPLE_ERR_OK;
 }
 
@@ -266,7 +248,7 @@ uint32_t SimpleOS_IPC_initMailbox(Mailbox_t *Mailbox, const char *Name)
         return Res;
     }
     Mailbox->Mail = 0x00000000;
-    Mailbox->Status = SIMPLE_STATUS_EMPTY;
+    Mailbox->Status = SIMPLE_IPC_EMPTY;
     SimpleOS_IPC_addIPCNode(&Scheduler.IPCList.Mailbox,&Mailbox->Parent);
     SimpleOS_exitCritical();
     return SIMPLE_ERR_OK;
@@ -276,7 +258,7 @@ uint32_t SimpleOS_IPC_pendMail(Mailbox_t *Mailbox, void *Address, uint32_t Time)
 {
     Thread_t *Thread;
     SimpleOS_enterCritical();
-    if(Mailbox->Status == SIMPLE_STATUS_EMPTY)
+    if(Mailbox->Status == SIMPLE_IPC_EMPTY)
     {
         if(Time == 0)
         {
@@ -292,14 +274,14 @@ uint32_t SimpleOS_IPC_pendMail(Mailbox_t *Mailbox, void *Address, uint32_t Time)
         }
     }
     SimpleOS_enterCritical();
-    if(Mailbox->Status != SIMPLE_STATUS_FULL)
+    if(Mailbox->Status == SIMPLE_IPC_EMPTY)
     {
         SimpleOS_exitCritical();
         return SIMPLE_ERR_TIMEOUT;
     }
     *(uint32_t*)Address = Mailbox->Mail;
     Mailbox->Mail = 0x00000000;
-    Mailbox->Status = SIMPLE_STATUS_EMPTY;
+    Mailbox->Status = SIMPLE_IPC_EMPTY;
     SimpleOS_exitCritical();
     return SIMPLE_ERR_OK;
     
@@ -309,10 +291,10 @@ uint32_t SimpleOS_IPC_sendMail(Mailbox_t *Mailbox, uint32_t Mail)
 {
     if(!Mailbox)
         return SIMPLE_ERR_ILIGALARG;
-    if(Mailbox->Status != SIMPLE_STATUS_EMPTY)
+    if(Mailbox->Status == SIMPLE_IPC_FULL)
         return SIMPLE_ERR_FULL;
     SimpleOS_enterCritical();
-    Mailbox->Status = SIMPLE_STATUS_FULL;
+    Mailbox->Status = SIMPLE_IPC_FULL;
     Mailbox->Mail = Mail;
     if(Mailbox->Parent.Head != SIMPLE_NULL)                              //Some one is waiting Mail
     {
@@ -634,44 +616,4 @@ uint32_t SimpleOS_IPC_sendQueue(Queue_t *Queue, void *Src, uint32_t Lenth)
         }
     }
     return SIMPLE_ERR_OK;
-}
-
-uint32_t SimpleOS_IPC_initParameterPipe(ParameterPipe_t *Pipe)
-{
-    SimpleOS_IPC_initIPC(Pipe,"Pipe");
-    return SIMPLE_ERR_OK;
-}
-    
-uint32_t SimpleOS_IPC_pendParameterPipe(Thread_t *Thread, uint32_t Time)
-{
-    if(Thread == SIMPLE_NULL)
-        return SIMPLE_ERR_NOTEXIST;
-    if(Time == 0)
-        return SIMPLE_ERR_TIMEOUT;
-    SimpleOS_enterCritical();
-    SimpleOS_IPC_suspendThread(&Pipe,Thread,Time);
-    Thread->IPCOpt = SIMPLE_PIPE_PENDING;
-    SimpleOS_exitCritical();
-    SimpleOS_schedule();
-    
-    return Thread->ErrorCode;
-}
-
-uint32_t SimpleOS_IPC_sendParameterPipe(Thread_t *Thread, void *Parameter)
-{
-    if(Thread == SIMPLE_NULL)
-        return SIMPLE_ERR_NOTEXIST;
-    SimpleOS_enterCritical();
-    if(Thread->IPCOpt == SIMPLE_PIPE_PENDING)
-    {
-        Thread->Paramater = Parameter;
-        SimpleOS_exitCritical();
-        SimpleOS_schedule();
-        return SIMPLE_ERR_OK;
-    }
-    else
-    {
-        SimpleOS_exitCritical();
-        return SIMPLE_ERR_NOTEXIST;
-    }
 }

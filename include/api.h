@@ -3,8 +3,7 @@
 #ifdef __cplusplus
 extern "C"{
 #endif
-#include "stdint.h"
-#include "simple_cdef.h"
+#include "simpleos.h"
 uint32_t setThreadName(Thread_t *Thread, const char *Name);                                             //0
 uint32_t setThreadEntry(Thread_t *Thread, Thread_Entry Run);                                            //1
 uint32_t setThreadParamater(Thread_t *Thread,void *parameter);                                          //2

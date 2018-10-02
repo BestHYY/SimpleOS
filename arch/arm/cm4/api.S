@@ -32,13 +32,11 @@
 	EXPORT	initQueue									;26
 	EXPORT	pendQueue									;27
 	EXPORT	sendQueue									;28
-	EXPORT	pendParameter								;29
-	EXPORT	sendParameter								;30
 	;Heap API
-	EXPORT	addHeap										;31
-	EXPORT	malloc										;32
-	EXPORT	free										;33
-	EXPORT	getHeapInfo									;34
+	;EXPORT	addHeap										;31
+	;EXPORT	malloc										;32
+	;EXPORT	free										;33
+	;EXPORT	getHeapInfo									;34
 		
 	AREA    DATA,DATA, READONLY
 		
@@ -74,13 +72,11 @@
 	IMPORT	SimpleOS_IPC_initQueue						;26
 	IMPORT	SimpleOS_IPC_pendQueue						;27
 	IMPORT	SimpleOS_IPC_sendQueue						;28
-	IMPORT	SimpleOS_IPC_pendParameterPipe				;29
-	IMPORT	SimpleOS_IPC_sendParameterPipe				;30
 	;Heap API
-	IMPORT	SimpleOS_Heap_add							;31
-	IMPORT	SimpleOS_malloc								;32
-	IMPORT	SimpleOS_free								;33
-	IMPORT	SimpleOS_getHeapInfo						;34
+	;IMPORT	SimpleOS_Heap_add							;31
+	;IMPORT	SimpleOS_malloc								;32
+	;IMPORT	SimpleOS_free								;33
+	;IMPORT	SimpleOS_getHeapInfo						;34
 		
 	EXPORT	__SystemCall_Table
 __SystemCall_Table
@@ -116,13 +112,11 @@ __SystemCall_Table
 	DCD	SimpleOS_IPC_initQueue						;26
 	DCD	SimpleOS_IPC_pendQueue						;27
 	DCD	SimpleOS_IPC_sendQueue						;28
-	DCD	SimpleOS_IPC_pendParameterPipe				;29
-	DCD	SimpleOS_IPC_sendParameterPipe				;30
 	;Heap API
-	DCD	SimpleOS_Heap_add							;31
-	DCD	SimpleOS_malloc								;32
-	DCD	SimpleOS_free								;33
-	DCD	SimpleOS_getHeapInfo						;34
+	;DCD	SimpleOS_Heap_add							;31
+	;DCD	SimpleOS_malloc								;32
+	;DCD	SimpleOS_free								;33
+	;DCD	SimpleOS_getHeapInfo						;34
 		
 
 	AREA CODE, CODE, READONLY
@@ -225,19 +219,6 @@ pendParameter
 	BX	LR
 sendParameter
 	SVC	30
-	BX	LR
-
-addHeap
-	SVC	31
-	BX	LR
-malloc
-	SVC	32
-	BX	LR
-free
-	SVC	33
-	BX	LR
-getHeapInfo
-	SVC	34
 	BX	LR
 
 SVC_Schedule
